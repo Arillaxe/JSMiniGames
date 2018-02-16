@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Horse board</title>
+	<style type="text/css">
+		* {
+			margin: 0;
+		}
+	</style>
+</head>
+<body>
+<canvas></canvas>
+<script type="text/javascript">
+var canvas = document.getElementsByTagName('canvas')[0];
+var ctx = canvas.getContext('2d');
+
+canvas.width = 600;
+canvas.height = 600;
+
+var img = new Image();
+img.src = "horse_sprite.png";
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function drawBoard(){
+	ctx.fillStyle = "white";
+	ctx.fillRect(0, 0, 600, 600);
+	ctx.fillStyle = "black";
+	ctx.strokeRect(0, 0, 600, 600);
+	for(let i = 0; i < 8; ++i){
+		for(let j = 0; j < 8; ++j){
+			if((i + j) % 2 == 0){
+				ctx.fillRect(600 / 8 * i, 600 / 8 * j, 600 / 8, 600 / 8);
+			}
+		}
+	}
+}
+
+class ChessFigure{
+	constructor(x, y, c, rules){
+		this.x = x;
+		this.y = y;
+		this.c = c;
+		this.rules = rules;
+		this.was = [{x: x, y: y}];
+	}
+
+	draw(){
+		ctx.fillStyle = "#00ff00aa";
+		this.was.forEach(function(w){
+			ctx.fillRect(600 / 8 * w.x, 600 / 8 * w.y, 600 / 8, 600 / 8);
+		});
+		ctx.drawImage(img, 600 / 8 * this.x + 10, 600 / 8 * this.y + 10, 600 / 8 - 20, 600 / 8 - 20);
+	}
+
+	click(x, y){
+		for(let i = 0; i < this.rules.length; ++i){
+			if(this.x + this.rules[i].x == x && this.y + this.rules[i].y == y && x < 8 && y < 8 && x >= 0 && y >= 0){
+				let pass = true;
+				this.was.forEach(function(w){
+					if(w.x == x && w.y == y) pass = false;
+				});
+				if(!pass) return;
+				this.x = x;
+				this.y = y;
+				this.was.push({x: x, y: y});
+				drawBoard();
+				this.draw();
+				return;
+			}
+		}
+	}
+
+	move(){
+		let moves = getMoves(this.x, this.y, chessRules, this.was);
+		if(moves.length == 0) return;
+		let minMove = getMoves(moves[0].x, moves[0].y, chessRules, this.was);
+		let minI = 0;
+		for(var i = 1; i < moves.length; ++i){
+			if(minMove.length > (getMoves(moves[i].x, moves[i].y, chessRules, this.was)).length){
+				minMove = getMoves(moves[i].x, moves[i].y, chessRules, this.was);
+				minI = i;
+			}
+			
+		}
+		this.click(moves[minI].x, moves[minI].y);
+	}
+}
+
+document.onmousedown = function(e){
+	let x = Math.round(e.clientX / (600 / 8) - 0.5);
+	let y = Math.round(e.clientY / (600 / 8) - 0.5);
+	horse.click(x, y);
+}
+
+function getMoves(x, y, rules, was){
+	let c = [];
+	rules.forEach(function(rule){
+		if(x + rule.x < 8 && x + rule.x > -1 && y + rule.y < 8 && y + rule.y > -1){
+			let pass = true;
+			was.forEach(function(w){
+				if(x + rule.x == w.x && y + rule.y == w.y){
+					pass = false;
+				}
+			});
+			if(was.length == 0 || pass){
+				c.push({x: x + rule.x, y: y + rule.y});
+			}
+		}
+	});
+	return c;
+}
+
+drawBoard();
+
+var chessRules = [
+	{
+		x: 1,
+		y: -2
+	},
+	{
+		x: -1,
+		y: -2
+	},
+	{
+		x: 1,
+		y: 2
+	},
+	{
+		x: -1,
+		y: 2
+	},
+	{
+		x: 2,
+		y: -1
+	},
+	{
+		x: 2,
+		y: 1
+	},
+	{
+		x: -2,
+		y: -1
+	},
+	{
+		x: -2,
+		y: 1
+	},
+];
+
+var horse = new ChessFigure(getRandomInt(0, 7), getRandomInt(0, 7), "red", chessRules);
+horse.draw();
+
+setInterval(function(){
+	horse.move();
+}, 400);
+</script>
+</body>
+</html>
