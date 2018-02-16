@@ -1,6 +1,6 @@
 # JSMiniGames
 
-Some of my javaScript mini projects.
+Some of my JavaScript mini projects.
 
 # Timer.html
 Timer is a an automatic schulte table app.
