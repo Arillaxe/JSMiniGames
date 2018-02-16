@@ -11,3 +11,9 @@ Press space when you complete a table. Your time will be recorded and added to y
 Towers is a hanoi puzzle game.
 
 You can change number of towers and pieces.
+
+
+# Horse.html
+Visualization of solving Knight's tour 
+
+https://en.wikipedia.org/wiki/Knight%27s_tour
