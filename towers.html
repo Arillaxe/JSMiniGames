@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Towers</title>
+	<style type="text/css">
+	* {
+		margin: 0;
+		font-family: sans-serif;
+	}
+
+	body {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		background: #f6f6f6;
+	}
+
+	.inputs {
+		display: flex;
+		flex-direction: column;
+		padding: 5px;
+		border: 1px solid #e1e1e1;
+	}
+
+	.all {
+		display: flex;
+		justify-content: space-between;
+		width: 800px;
+		margin: 10px;
+		padding: 5px;
+		background: #efefef;
+		border: 1px solid grey;
+	}
+
+	.desc {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-around;
+		text-align: center;
+	}
+
+	input {
+		width: 97%;
+		margin-bottom: 10px;
+		padding: 0;
+	}
+
+	button {
+		background: #509c49	;
+		color: #fff;
+		font-weight: bold;
+		font-size: 14px;
+		padding: 5px;
+		border: none;
+	}
+
+	canvas {
+		border: 1px solid grey;
+	}
+	</style>
+</head>
+<body>
+	<canvas id="cnvs"></canvas>
+	<div class="all">
+		<div class="desc">
+			<p><b>A</b>,<b>D</b> - Move ring left,right , select next,previous ring</p>
+			<p><b>W</b> - Pick ring</p>
+			<p><b>S</b> - Lower ring</p>
+			<p>Press restart when u change ring or tower count</p>
+		</div>
+		<div class="inputs">
+			Tower Color
+			<input type="color" id="tColor"></input>
+			Ring Color
+			<input type="color" id="rColor"></input>
+			Background Color
+			<input type="color" id="bColor"></input>
+			Ring Count
+			<input type="number" min="3" id="rCount"></input>
+			Tower Count
+			<input type="number" min="3" id="tCount"></input>
+			<button id="restart" onclick="Init()">Restart</button>
+		</div>
+	</div>
+<script type="text/javascript">
+
+	var keys = {
+		'up': 119,
+		'down': 115,
+		'right': 100,
+		'left': 97
+	};
+
+	var Player = {
+		'tid': 1,
+		'cRing': null
+	}
+
+	var tcInput = document.getElementById("tColor");
+	var rcInput = document.getElementById("rColor");
+	var bcInput = document.getElementById("bColor");
+
+	var rCountInput = document.getElementById("rCount");
+	var tCountInput = document.getElementById("tCount");
+
+	var canvas = document.getElementById('cnvs');
+	var ctx = canvas.getContext('2d');
+
+	var height = canvas.height = 500;
+	var width = canvas.width = 1000;
+	ctx.textBaseline = "middle";
+	ctx.textAlign = "center";
+
+	var winFont = "70px sans-serif";
+
+	var winColor = "#ff0000";
+	var background = "#87ceeb";
+	var towerColor = "#ffff00";
+	var selectedRingColor = "#ff0000";
+	var ringOutlineColor = "#000000";
+	var ringColor = "#ffffff";	
+
+	var outlineWidth = 3;
+	var selectedOutlineWidth = 5;
+
+	var towerWidth = width/40;
+	var towerHeight = (5/8)*height;
+
+	var towerCount = 3;
+	var ringCount = 3;
+
+	tcInput.value = towerColor;
+	rcInput.value = ringColor;
+	bcInput.value = background;
+
+	rCountInput.value = ringCount;
+	tCountInput.value = towerCount;
+
+	function clear(){
+		ctx.fillStyle = background;
+		ctx.fillRect(0,0,width,height);
+	}
+
+	function Tower(id){
+		this.id = id;
+
+		this.draw = function(){
+			ctx.fillStyle = towerColor;
+			ctx.fillRect(width/(towerCount+1)*this.id-(towerWidth/2),height-towerHeight,towerWidth,towerHeight);
+		}
+	}
+
+	function Ring(r,tid,yPos){
+		this.r = r;
+		this.tid = tid;
+		this.yPos = yPos;
+		this.grounded = true;
+		this.selected = false;
+
+		this.draw = function(){
+			ctx.fillStyle = ringColor;
+			ctx.fillRect(width/(towerCount+1)*this.tid-(width/(towerCount+1)*((this.r-1)/ringCount))/2,height-(towerHeight/ringCount*this.yPos),width/(towerCount+1)*((this.r-1)/ringCount),towerHeight/ringCount);
+			ctx.strokeStyle = this.selected ? selectedRingColor : ringOutlineColor;
+			ctx.lineWidth = this.selected ? selectedOutlineWidth : outlineWidth;
+			ctx.strokeRect(width/(towerCount+1)*this.tid-(width/(towerCount+1)*((this.r-1)/ringCount))/2,height-(towerHeight/ringCount*this.yPos),width/(towerCount+1)*((this.r-1)/ringCount),towerHeight/ringCount);
+		}
+	}
+
+	function createTowers(num){
+		var towers = [];
+		for(var i=0;i<num;i++){
+			towers.push(new Tower(i+1));
+		}
+		return towers;
+	}
+	
+	function createRings(){
+		var rings = [];
+		for(var i=0;i<ringCount;i++){
+			rings.push(new Ring(ringCount-i+1,1,i+1));
+		}
+		rings[ringCount-1].selected = true;
+		Player.cRing = rings[ringCount-1];
+		return rings;
+	}
+
+	function drawRings(rings){
+		for(var i=0;i<rings.length;i++){
+			rings[i].draw();
+		}
+	}
+
+	function drawTowers(towers){
+		for(var i=0;i<towers.length;i++){
+			towers[i].draw();
+		}
+	}
+
+	function getClosestRing(rings,tid,dir){
+		var ltid = tid;
+		if(dir){
+			for(var i=1;i<towerCount;i++){
+				ltid++;
+				if(ltid > towerCount) ltid = 1;
+				if(getTopRing(ltid,rings)){
+					return getTopRing(ltid,rings);
+				}
+			}
+		}else {
+			for(var i=1;i<towerCount;i++){
+				ltid--;
+				if(ltid < 1) ltid = towerCount;
+				if(getTopRing(ltid,rings)){
+					return getTopRing(ltid,rings);
+				}
+			}
+		}
+	}
+
+	function getTopRing(tid,rings){
+		var yPos = 0;
+		var ring;
+		for(var i=0;i<rings.length;i++){
+			if(rings[i].tid == tid && rings[i].yPos > yPos && rings[i] != Player.cRing){
+				yPos = rings[i].yPos;
+				ring = rings[i];
+			}
+		}
+		return ring;
+	}
+
+	function checkWinCondition(rings){
+		var won = true;
+		for(var i=0;i<rings.length;i++){
+			won = won && (rings[i].tid == towerCount && rings[i].yPos < ringCount+1);
+		}
+		return won;
+	}
+
+	document.onkeypress = function(e){
+		if(e.which == keys.right){
+			if(!Player.cRing.grounded){
+				Player.cRing.tid++;
+				if(Player.cRing.tid > towerCount){
+					Player.cRing.tid = 1;
+				}	
+			}else{
+				Player.cRing.selected = false;
+				Player.cRing = getClosestRing(rings,Player.cRing.tid,true) || Player.cRing;
+				Player.cRing.selected = true;
+			}
+			render();
+		}else if(e.which == keys.left){
+			if(!Player.cRing.grounded){
+				Player.cRing.tid--;	
+				if(Player.cRing.tid == 0){
+					Player.cRing.tid = towerCount;
+				}
+			}else{
+				Player.cRing.selected = false;
+				Player.cRing = getClosestRing(rings,Player.cRing.tid,false) || Player.cRing;
+				Player.cRing.selected = true;	
+			}
+			render();
+		}else if(e.which == keys.up && Player.cRing.yPos < ringCount+1){
+			Player.cRing.yPos = ringCount+1;
+			Player.cRing.grounded = Player.cRing.yPos == ringCount+1 ? false : true;
+			render();			
+		}else if(e.which == keys.down && Player.cRing.yPos > 1 && (getTopRing(Player.cRing.tid,rings) ? getTopRing(Player.cRing.tid,rings).r > Player.cRing.r : true)){
+			Player.cRing.yPos = getTopRing(Player.cRing.tid,rings) ? getTopRing(Player.cRing.tid,rings).yPos+1 : 1;
+			Player.cRing.grounded = true;
+			render();
+		}
+	}
+
+	function render(){
+		clear();
+		drawTowers(towers);
+		drawRings(rings);
+		if(checkWinCondition(rings)){
+			document.onkeypress = undefined;
+			ctx.fillStyle = winColor;
+			ctx.font = winFont;
+			ctx.fillText("You won!",width/2,height/2);
+		}
+	}
+
+	var towers = [];
+	var rings = [];
+
+	function tChange(e){
+		console.log(e);	
+	}
+
+	function Init(){
+		ringCount = parseInt(rCountInput.value);
+		towerCount = parseInt(tCountInput.value);
+		Player.cRing = null;
+		Player.tid = 1;
+		towers = createTowers(towerCount);
+		rings = createRings();
+		render();
+	}
+
+	rcInput.onchange = function(){
+		ringColor = rcInput.value;
+		render();
+	}
+
+	bcInput.onchange = function(){
+		background = bcInput.value;
+		render();
+	}
+
+	tcInput.onchange = function(){
+		towerColor = tcInput.value;
+		render();
+	}
+
+	Init();
+
+</script>
+</body>
+</html>
