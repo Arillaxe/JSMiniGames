@@ -13,7 +13,5 @@ Towers is a hanoi puzzle game.
 You can change number of towers and pieces.
 
 
-## Horse.html
-Visualization of solving Knight's tour 
-
-https://en.wikipedia.org/wiki/Knight%27s_tour
+## KnightsTour.html
+Visualization of solving [Knight's tour](https://en.wikipedia.org/wiki/Knight%27s_tour) problem
