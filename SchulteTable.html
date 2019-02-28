@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Schulte Table</title>
+	<link rel="stylesheet" href="schulte.css">
+</head>
+<body>
+	<table id="table"></table>
+	<div class="time">
+		<p id="timer">0.0</p>
+		<p id="average">0.0</p>
+		<div class="scores">
+			<ul id="records"></ul>
+		</div>
+	</div>
+	
+	<script type="text/javascript">
+
+		const tableNode = document.getElementById('table');
+		const timerNode = document.getElementById('timer');
+		const averageTimeNode = document.getElementById('average');
+		const recordsNode = document.getElementById('records');
+
+		let time = 0;
+		let lastTime = Date.now();
+		let times = [];
+		let cells = [];
+		let numbers = Array(25).fill(0).map((_, idx) => idx + 1);
+
+		for (let row = 0; row < 5; ++row) {
+			const tr = document.createElement('tr');
+			for (let col = 0; col < 5; ++col) {
+				const td = document.createElement('td');
+				cells.push(td);
+				tr.appendChild(td);
+			}
+			tableNode.appendChild(tr);
+		}
+
+		document.onkeydown = (e) => {
+			if (e.code === "Space") {
+				if (numbers[0] !== 1) {
+					times.push((time / 1000));
+					averageTimeNode.innerHTML = times.reduce((avrg, curr) => (avrg + curr) / 2, times[0]).toFixed(1);
+
+					const newRecordNode = document.createElement("li");
+					newRecordNode.innerHTML = (time / 1000).toFixed(1);
+					recordsNode.appendChild(newRecordNode);
+					
+					timerNode.innerHTML = "0.0";
+					time = 0;
+				}
+				numbers = shuffle(numbers);	
+				cells.forEach((cell, idx) => cell.innerHTML = numbers[idx]);
+				lastTime = Date.now();
+			}
+		}
+
+		setInterval(function(){
+			if (numbers[0] === 1) return;
+
+			time += Date.now() - lastTime;
+			lastTime = Date.now();
+			timerNode.innerHTML = (time / 1000).toFixed(1)
+		}, 100);
+
+		function shuffle(arr) {
+			const copied = [...arr];
+			return arr.map(() => {
+				let i = Math.floor(Math.random() * copied.length);
+				let p = copied[i];
+				copied.splice(i, 1);
+				return p;
+			});
+		}
+
+	</script>
+</body>
+</html>
