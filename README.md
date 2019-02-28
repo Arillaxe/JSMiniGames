@@ -2,7 +2,7 @@
 
 Some of my JavaScript mini projects.
 
-## ShculteTable
+## SchulteTable
 This is an automatic schulte table app.
 
 Press space when you complete a table. Your time will be recorded and added to your average solving time.
